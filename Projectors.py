@@ -91,12 +91,11 @@ def detla_func(x, l, Delta):
 3. Step function
 '''
 
-def step_func(deg, delta, eps = 1e-2):
+def step_func(deg, mu, delta, eps = 1e-2):
 
     k = np.sqrt(2) / delta * np.sqrt(np.log(2 / (np.pi * eps**2)))
-    f = lambda x: 0.5 * (1 - erf(k * x))
+    f = lambda x: 0.5 * (erf(k * (x + mu)) - erf(k * (x - mu)))
     return C.chebinterpolate(f, deg)
 
 def step(x, coefs):
     return C.chebval(np.asarray(x), coefs)
-
