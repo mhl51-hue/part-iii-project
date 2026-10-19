@@ -99,3 +99,31 @@ def step_func(deg, mu, delta, eps = 1e-2):
 
 def step(x, coefs):
     return C.chebval(np.asarray(x), coefs)
+
+'''
+plotting the three proctors on their own to check their shapes
+'''
+
+x = np.linspace(-1, 1, 2000)
+fig, ax = plt.subplots(1, 3, figsize=(12, 3.5))
+
+# wall-Chebyshev
+for m in (1, 3, 10):
+    ax[0].plot(x, C.chebval(x, wall_cheb_coefs(m)), label=f'm={m}')
+ax[0].set_title("wall-Chebyshev")
+
+# eigenstate filter
+for l in (5, 20):
+    ax[1].plot(x, detla_func(x, l, 0.2), label=f'l={l}')
+ax[1].set_title("eigenstate filter, Delta=0.2")
+
+# step function
+for d in (50, 150):
+    ax[2].plot(x, step(x, step_func(d, 0.3, 0.075)), label=f'degree={d}')
+ax[2].set_title("step, mu=0.3, delta=0.075")
+
+for a in ax:
+    a.set_xlabel("x")
+    a.legend()
+plt.tight_layout()
+plt.show()
