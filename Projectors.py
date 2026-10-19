@@ -43,7 +43,7 @@ def plot_wall_cheb():
     plt.xlim(-1.1, 1.1)
     plt.ylim(-0.6, 2.1)
     plt.xlabel(r'$x$')
-    plt.ylabel(r'$G_m^{\mathrm{wall-Ch}}(x)$')
+    plt.ylabel(r'$G_m^{\\mathrm{wall-Ch}}(x)$')
     plt.legend()
     plt.tight_layout()
 
@@ -108,7 +108,7 @@ x = np.linspace(-1, 1, 2000)
 fig, ax = plt.subplots(1, 3, figsize=(12, 3.5))
 
 # wall-Chebyshev
-for m in (1, 3, 10):
+for m in (1, 3, 20):
     ax[0].plot(x, C.chebval(x, wall_cheb_coefs(m)), label=f'm={m}')
 ax[0].set_title("wall-Chebyshev")
 
