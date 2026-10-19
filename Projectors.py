@@ -91,10 +91,10 @@ def detla_func(x, l, Delta):
 3. Step function
 '''
 
-def step_func(deg, mu, delta, eps = 1e-2):
+def step_func(deg, delta, eps = 1e-2):
 
     k = np.sqrt(2) / delta * np.sqrt(np.log(2 / (np.pi * eps**2)))
-    f = lambda x: 0.5 * (erf(k * (x + mu)) - erf(k * (x - mu)))
+    f = lambda x: 0.5 * (1 - erf(k * x))
     return C.chebinterpolate(f, deg)
 
 def step(x, coefs):
@@ -119,8 +119,8 @@ ax[1].set_title("eigenstate filter, Delta=0.2")
 
 # step function
 for d in (50, 150):
-    ax[2].plot(x, step(x, step_func(d, 0.3, 0.075)), label=f'degree={d}')
-ax[2].set_title("step, mu=0.3, delta=0.075")
+    ax[2].plot(x, step(x, step_func(d, 0.075)), label=f'degree={d}')
+ax[2].set_title("step, delta=0.075")
 
 for a in ax:
     a.set_xlabel("x")
