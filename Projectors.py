@@ -6,7 +6,11 @@ https://iopscience.iop.org/article/10.1088/2058-9565/ae2887/pdf
 3. Step function
 '''
 import numpy as np
-from numpy.polynomial import chebyshev as C
+from numpy.polynomial import chebyshev as Cheb
+'''
+Cheb.chebval(x, c[, tensor]) will evaluate a chebyshev series at point x
+Cheb.chebinterpolate(func, deg[, args]) will interpolate a function at the chebyshev points of the first kind
+'''
 import matplotlib.pyplot as plt
 from scipy.special import erf
 
@@ -60,14 +64,15 @@ def wall_cheb(H, E, R, m):
 
     H is the hamiltonian eigenvalues
     E is the estimate of ground state energy
-    R is the spectral range of the Hamiltonian
+    R is the spectral range of the Hamiltonian (energy difference between lowest and highest possible energies in system)
     '''
     x = 2 * ((np.asarray(H) - E) / R) - 1
-    return C.chebval(x, wall_cheb_coefs(m))
+    return Cheb.chebval(x, wall_cheb_coefs(m))
 
 def wall_cheb_nodes(E, R, m):
     '''
     nodes from Eq. 16
+    nu is the index integer running from 0 to m used to calculate specific chebyshev nodes
     '''
     nu = np.arange(1, m+1)
     return E + 0.5 * R * (1 - np.cos(nu * np.pi / (m+0.5) )) 
@@ -77,28 +82,34 @@ def wall_cheb_nodes(E, R, m):
 2. Eigenstate filter (delta function)
 '''
 
-def detla_func(x, l, Delta):
+def delta_func(x, l, Edelta):
     '''
     x is the rescaled energy (E- lambda)/(alpha + |lambda|)
-    Delta is the rescaled gap
+    l is the degree of the chebyshev filter polynomial
+    Edelta is the spectral gap of the system (energy difference between ground and first excited state)
     Eq. 9
     '''
-    a = np.zeros(l + 1); a[l] = 1 #array for chebval coefs
-    b = lambda z: -1 + 2 * (z**2 - Delta**2) / (1 - Delta**2)
-    return C.chebval(b(np.asarray(x)), a) / C.chebval(b(0), a)
+    a = np.zeros(l + 1); a[l] = 1 # array for chebval coefs
+    b = lambda z: -1 + 2 * (z**2 - Edelta**2) / (1 - Edelta**2) # coordinate transformation, maps [Edelta, 1] onto [-1, 1]
+    return Cheb.chebval(b(np.asarray(x)), a) / Cheb.chebval(b(0), a)
 
 '''
 3. Step function
 '''
 
-def step_func(deg, delta, eps = 1e-2):
-
-    k = np.sqrt(2) / delta * np.sqrt(np.log(2 / (np.pi * eps**2)))
+def step_func(deg, delta, epsilon = 1e-2):
+    '''
+    deg is the degree of interpolation (number of chebyshev points used to fit the step function)
+    delta is the transition width of the step function
+    epsilon is the target error tolerance for the step function approximation
+    k is a scaling factor derived from delta and epsilon, controls steepness of erf
+    '''
+    k = np.sqrt(2) / delta * np.sqrt(np.log(2 / (np.pi * epsilon**2)))
     f = lambda x: 0.5 * (1 - erf(k * x))
-    return C.chebinterpolate(f, deg)
+    return Cheb.chebinterpolate(f, deg)
 
 def step(x, coefs):
-    return C.chebval(np.asarray(x), coefs)
+    return Cheb.chebval(np.asarray(x), coefs)
 
 '''
 plotting the three proctors on their own to check their shapes
@@ -109,12 +120,12 @@ fig, ax = plt.subplots(1, 3, figsize=(12, 3.5))
 
 # wall-Chebyshev
 for m in (1, 3, 20):
-    ax[0].plot(x, C.chebval(x, wall_cheb_coefs(m)), label=f'm={m}')
+    ax[0].plot(x, Cheb.chebval(x, wall_cheb_coefs(m)), label=f'm={m}')
 ax[0].set_title("wall-Chebyshev")
 
 # eigenstate filter
 for l in (5, 20):
-    ax[1].plot(x, detla_func(x, l, 0.2), label=f'l={l}')
+    ax[1].plot(x, delta_func(x, l, 0.2), label=f'l={l}')
 ax[1].set_title("eigenstate filter, Delta=0.2")
 
 # step function
