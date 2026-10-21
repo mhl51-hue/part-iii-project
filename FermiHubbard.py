@@ -12,6 +12,7 @@ from qiskit_nature.second_q.hamiltonians.lattices import (
 from qiskit_nature.second_q.problems import LatticeModelProblem
 from qiskit_nature.second_q.mappers import JordanWignerMapper
 
+
 # LineLattice initialises the space in which the fermi hubbard model exists
 line_lattice = LineLattice(num_nodes=10, boundary_condition=BoundaryCondition.OPEN)
 
@@ -31,8 +32,11 @@ fermi_hubbard_model = FermiHubbardModel(
 
 # Extracting the 2nd quantised hamiltonian from the fermi hubbard model
 fermihubbard_problem = LatticeModelProblem(fermi_hubbard_model)
-fermihubbard_op, aux_op = fermihubbard_problem.second_q_ops() 
+fermihubbard_op, aux_op = fermihubbard_problem.second_q_ops() #fermihubbar_op is the 2nd quantised H
 
 # Using the Jordan Wigner transformation to get the qubit hamiltonian
 mapper = JordanWignerMapper()
-fermihubbard_qubit = mapper.map(fermihubbard_op)
+fermihubbard_qubit = mapper.map(fermihubbard_op) #fermihubbard_qubit is the qubit H
+
+# Turning the qubit hamiltonian into matrix form
+fermihubbard_matrix = fermihubbard_qubit.to_matrix(sparse=True)
