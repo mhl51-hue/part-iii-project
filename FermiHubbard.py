@@ -3,7 +3,7 @@ Fermi Hubbard model
 Taking the second quantised hamiltonian and transforming it into a qubit hamiltonian
 and then transforming into a matrix
 '''
-
+import numpy as np
 from qiskit_nature.second_q.hamiltonians import FermiHubbardModel
 from qiskit_nature.second_q.hamiltonians.lattices import (
     LineLattice,
@@ -14,7 +14,8 @@ from qiskit_nature.second_q.mappers import JordanWignerMapper
 
 
 # LineLattice initialises the space in which the fermi hubbard model exists
-line_lattice = LineLattice(num_nodes=10, boundary_condition=BoundaryCondition.OPEN)
+line_lattice = LineLattice(num_nodes=4, boundary_condition=BoundaryCondition.OPEN)
+# Need to check system size issues
 
 '''
 Creating the fermi hubbard model
@@ -32,11 +33,19 @@ fermi_hubbard_model = FermiHubbardModel(
 
 # Extracting the 2nd quantised hamiltonian from the fermi hubbard model
 fermihubbard_problem = LatticeModelProblem(fermi_hubbard_model)
-fermihubbard_op, aux_op = fermihubbard_problem.second_q_ops() #fermihubbar_op is the 2nd quantised H
+fermihubbard_op, aux_op = fermihubbard_problem.second_q_ops() # Fermihubbar_op is the 2nd quantised H
 
 # Using the Jordan Wigner transformation to get the qubit hamiltonian
 mapper = JordanWignerMapper()
-fermihubbard_qubit = mapper.map(fermihubbard_op) #fermihubbard_qubit is the qubit H
+fermihubbard_qubit = mapper.map(fermihubbard_op) # Fermihubbard_qubit is the qubit H
 
 # Turning the qubit hamiltonian into matrix form
 fermihubbard_matrix = fermihubbard_qubit.to_matrix(sparse=True)
+
+# Normalising (scaling to [-1, 1])
+alpha = np.sum(np.abs(fermihubbard_qubit.coeffs))
+M = fermihubbard_matrix.toarray() / alpha
+
+# Single value decomposition SVD, M = U diag(s) V†
+U, s, Vt = np.linalg.svd(M)
+V = Vt.conj().T

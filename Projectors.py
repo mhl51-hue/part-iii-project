@@ -89,8 +89,8 @@ def delta_func(x, l, Edelta):
     Edelta is the spectral gap of the system (energy difference between ground and first excited state)
     Eq. 9
     '''
-    a = np.zeros(l + 1); a[l] = 1 # array for chebval coefs
-    b = lambda z: -1 + 2 * (z**2 - Edelta**2) / (1 - Edelta**2) # coordinate transformation, maps [Edelta, 1] onto [-1, 1]
+    a = np.zeros(l + 1); a[l] = 1 # Array for chebval coefs
+    b = lambda z: -1 + 2 * (z**2 - Edelta**2) / (1 - Edelta**2) # Coordinate transformation, maps [Edelta, 1] onto [-1, 1]
     return Cheb.chebval(b(np.asarray(x)), a) / Cheb.chebval(b(0), a)
 
 '''
@@ -118,17 +118,17 @@ plotting the three proctors on their own to check their shapes
 x = np.linspace(-1, 1, 2000)
 fig, ax = plt.subplots(1, 3, figsize=(12, 3.5))
 
-# wall-Chebyshev
+# Wall-Chebyshev
 for m in (1, 3, 20):
     ax[0].plot(x, Cheb.chebval(x, wall_cheb_coefs(m)), label=f'm={m}')
 ax[0].set_title("wall-Chebyshev")
 
-# eigenstate filter
+# Eigenstate filter
 for l in (5, 20):
     ax[1].plot(x, delta_func(x, l, 0.2), label=f'l={l}')
 ax[1].set_title("eigenstate filter, Delta=0.2")
 
-# step function
+# Step function
 for d in (50, 150):
     ax[2].plot(x, step(x, step_func(d, 0.075)), label=f'degree={d}')
 ax[2].set_title("step, delta=0.075")
