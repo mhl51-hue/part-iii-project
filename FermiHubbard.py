@@ -68,9 +68,9 @@ Applying the polynomial functions to the single value matrix
 2. Eigenstate filter
 3. Step function
 '''
+
 from Projectors import (
     wall_cheb,
-    wall_cheb_coefs,
     delta_func,
     step_func,
 )
