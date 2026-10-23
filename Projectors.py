@@ -29,44 +29,17 @@ def wall_cheb_coefs(m):
     coefs = ((2 - (k == 0)) * (-1) ** k) / (1 + 2*m)
     return coefs
 
-'''
-recreating figure 1
-
-def plot_wall_cheb():
-    x = np.linspace(-1.1, 1.1, 1000)
-    orders = [1, 2, 3, 4, 5, 10]
-
-    plt.axhline(0, color = 'black', linewidth = 1)
-    plt.axvline(1, color = 'black', linewidth = 1)
-    plt.axvline(-1, color = 'black', linewidth = 1)
-    
-    for m in orders:
-        y = C.chebval(x, wall_cheb_coefs(m))
-        plt.plot(x, y, label=f'$m = {m}$')
-
-    plt.xlim(-1.1, 1.1)
-    plt.ylim(-0.6, 2.1)
-    plt.xlabel(r'$x$')
-    plt.ylabel(r'$G_m^{\\mathrm{wall-Ch}}(x)$')
-    plt.legend()
-    plt.tight_layout()
-
-    plt.show()
-    
-plot_wall_cheb()
-'''
-
-def wall_cheb(H, E, R, m):
+def wall_cheb(HEvals, E, R, m):
     '''
     map the Hamiltonian eigenspectrum onto the [-1, 1] interval
     x = 2((H-E)/R) - 1 Eq. 14 from paper
     Use to evaulate G_m
 
-    H is the hamiltonian eigenvalues
+    HEvals is the hamiltonian eigenvalues
     E is the estimate of ground state energy
     R is the spectral range of the Hamiltonian (energy difference between lowest and highest possible energies in system)
     '''
-    x = 2 * ((np.asarray(H) - E) / R) - 1
+    x = 2 * ((np.asarray(HEvals) - E) / R) - 1
     return Cheb.chebval(x, wall_cheb_coefs(m))
 
 def wall_cheb_nodes(E, R, m):
@@ -97,7 +70,7 @@ def delta_func(x, l, Edelta):
 3. Step function
 '''
 
-def step_func(deg, delta, epsilon = 1e-2):
+def step_func(deg, delta, mu, epsilon = 1e-2):
     '''
     deg is the degree of interpolation (number of chebyshev points used to fit the step function)
     delta is the transition width of the step function
@@ -105,8 +78,8 @@ def step_func(deg, delta, epsilon = 1e-2):
     k is a scaling factor derived from delta and epsilon, controls steepness of erf
     '''
     k = np.sqrt(2) / delta * np.sqrt(np.log(2 / (np.pi * epsilon**2)))
-    f = lambda x: 0.5 * (1 - erf(k * x))
-    return Cheb.chebinterpolate(f, deg)
+    f = lambda x: 0.5 * (1 - erf(k * (x - mu)))
+    return Cheb.chebinterpolate(f, deg), k
 
 def step(x, coefs):
     return Cheb.chebval(np.asarray(x), coefs)
@@ -130,11 +103,14 @@ ax[1].set_title("eigenstate filter, Delta=0.2")
 
 # Step function
 for d in (50, 150):
-    ax[2].plot(x, step(x, step_func(d, 0.075)), label=f'degree={d}')
+    coefs_step, k = step_func(deg=d, delta=0.075, mu=0)
+    ax[2].plot(x, step(x, coefs_step), label=f'degree={d}')
 ax[2].set_title("step, delta=0.075")
 
 for a in ax:
     a.set_xlabel("x")
     a.legend()
 plt.tight_layout()
-plt.show()
+
+if __name__ == "__main__":
+    plt.show()
