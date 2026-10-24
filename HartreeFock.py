@@ -21,3 +21,5 @@ if __name__ == "__main__":
     a = np.argmax(np.abs(psi_HF))
     print("basis index:", a, "bits:", format(a, "08b"))
     print("energy of HF state:", np.vdot(psi_HF, H @ psi_HF).real)
+
+print("ksdjbf")

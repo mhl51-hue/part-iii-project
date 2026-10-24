@@ -76,3 +76,4 @@ for name, p_s in projectors.items():
 something is wrong, success prob = 0?
 '''
 
+print("ksdjbf")

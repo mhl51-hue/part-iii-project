@@ -42,3 +42,5 @@ fermihubbard_qubit = mapper.map(fermihubbard_op) # Fermihubbard_qubit is the qub
 
 # Turning the qubit hamiltonian into matrix form
 fermihubbard_matrix = fermihubbard_qubit.to_matrix(sparse=True)
+
+print("ksdjbf")
