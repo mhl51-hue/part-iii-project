@@ -2,6 +2,8 @@
 Fermi Hubbard model
 Taking the second quantised hamiltonian and transforming it into a qubit hamiltonian
 and then transforming into a matrix
+
+Produces fermihubbard_matrix
 '''
 import numpy as np
 from qiskit_nature.second_q.hamiltonians import FermiHubbardModel

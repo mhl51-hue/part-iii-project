@@ -1,3 +1,8 @@
+'''
+Applying the projectors to the fermihubbard matrix
+and then acting that on the Hartree fock state vector
+'''
+
 import numpy as np
 from numpy.polynomial import chebyshev as Cheb
 from FermiHubbard import fermihubbard_matrix

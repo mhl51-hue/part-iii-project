@@ -4,6 +4,8 @@ https://iopscience.iop.org/article/10.1088/2058-9565/ae2887/pdf
 1. wall-Chebyshev projector
 2. Eigenstate filter (delta function)
 3. Step function
+
+Includes plots of the projectors
 '''
 import numpy as np
 from numpy.polynomial import chebyshev as Cheb
