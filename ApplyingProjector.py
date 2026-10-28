@@ -76,7 +76,3 @@ for name, p_s in projectors.items():
     overlap = np.vdot(phi, P_exact @ phi).real
     print(f"{name:18s} success prob = {success_prob:.4f}  "
           f"E = {energy:.6f} overlap after = {overlap:.6f}")
-
-'''
-something is wrong, success prob = 0?
-'''

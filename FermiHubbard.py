@@ -22,14 +22,14 @@ line_lattice = LineLattice(num_nodes=4, boundary_condition=BoundaryCondition.OPE
 '''
 Creating the fermi hubbard model
 t = -1.0 is the interaction parameter
-v = 0.0 is the onsite potential
+v = 0.0 is the onsite potential --> changing v to -2.5
 U = 5.0 is stength of onsite interaction
 '''
 
 fermi_hubbard_model = FermiHubbardModel(
     line_lattice.uniform_parameters(
         uniform_interaction=-1.0,
-        uniform_onsite_potential=0.0,
+        uniform_onsite_potential=-2.5,
     ),
     onsite_interaction=5.0,
 )

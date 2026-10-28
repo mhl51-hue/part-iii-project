@@ -94,12 +94,12 @@ x = np.linspace(-1, 1, 2000)
 fig, ax = plt.subplots(1, 3, figsize=(12, 3.5))
 
 # Wall-Chebyshev
-for m in (1, 3, 20):
+for m in (5, 10, 20):
     ax[0].plot(x, Cheb.chebval(x, wall_cheb_coefs(m)), label=f'm={m}')
 ax[0].set_title("wall-Chebyshev")
 
 # Eigenstate filter
-for l in (5, 20):
+for l in (10, 20):
     ax[1].plot(x, delta_func(x, l, 0.2), label=f'l={l}')
 ax[1].set_title("eigenstate filter, Delta=0.2")
 
