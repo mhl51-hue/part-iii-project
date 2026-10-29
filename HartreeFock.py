@@ -30,7 +30,6 @@ if __name__ == "__main__":
 Checking number of electrons in HF state and fermi hubbard state
 '''
 H = fermihubbard_matrix.toarray()
-print("energy of HF state", np.vdot(psi_HF, H @ psi_HF).real)
 
 n_sites = 4
 idx = np.arange(2 ** (2*n_sites))

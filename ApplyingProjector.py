@@ -67,6 +67,8 @@ projectors = {
     "step function": p_step,
 }
 
+print("HF energy:", np.vdot(psi_HF, H @ psi_HF).real, " E0:", np.linalg.eigvalsh(H)[0])
+
 for name, p_s in projectors.items():
     P = apply_projector(p_s)
     phi = P @ psi_HF # applying the projectors onto the HF state
