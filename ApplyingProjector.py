@@ -72,9 +72,7 @@ print("HF energy:", np.vdot(psi_HF, H @ psi_HF).real, " E0:", np.linalg.eigvalsh
 for name, p_s in projectors.items():
     P = apply_projector(p_s)
     phi = P @ psi_HF # applying the projectors onto the HF state
-    success_prob = np.vdot(phi, phi).real
     phi = phi / np.linalg.norm(phi)
     energy = np.vdot(phi, H @ phi).real
     overlap = np.vdot(phi, P_exact @ phi).real
-    print(f"{name:18s} success prob = {success_prob:.4f}  "
-          f"E = {energy:.6f} overlap after = {overlap:.6f}")
+    print(f"{name:18s} E = {energy:.6f}")
