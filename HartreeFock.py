@@ -15,7 +15,7 @@ import numpy as np
 # Creating the Hartree Fock occupation state
 hartreefock_circuit = HartreeFock(
     num_spatial_orbitals=4,
-    num_particles=(3,3), # n_up, n_down
+    num_particles=(1,1), # n_up, n_down
     qubit_mapper=JordanWignerMapper(),
 )
 
