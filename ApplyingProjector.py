@@ -5,23 +5,13 @@ and then acting that on the Hartree fock state vector
 
 import numpy as np
 from numpy.polynomial import chebyshev as Cheb
-from FermiHubbard import fermihubbard_matrix
+from FermiHubbard import (Emax, E0, H, E1)
 from HartreeFock import psi_HF
 from Projectors import (
     wall_cheb,
     delta_func,
     step_func,
 )
-
-'''
-Rescaling the fermi hubbard matrix
-'''
-H = fermihubbard_matrix.toarray()
-evals, evecs = np.linalg.eigh(H)
-
-E0 = evals[0]
-E1 = evals[evals > E0 + 1e-8][0] # First distinct excited level
-Emax = evals[-1]
 
 R = 1.01 * (Emax - E0)
 M = (H - E0 * np.eye(H.shape[0])) / R
@@ -37,16 +27,14 @@ Applying the polynomial functions to the single value matrix
 2. Eigenstate filter
 3. Step function
 '''
-# exact ground-space projector, for comparison
-gs = np.abs(evals - E0) < 1e-8
-P_exact = evecs[:, gs] @ evecs[:, gs].conj().T
 
+# Wall-Chebyshev function
 m = int(np.ceil(2 / Scaled_gap))
-p_wallcheb = wall_cheb(s * R, 0.0, R, m) # Wall-Chebyshev projector evaluated at each s[i]
+p_wallcheb = wall_cheb(s * R, 0.0, R, 110) # Wall-Chebyshev projector evaluated at each s[i]
 
 # Eigenstate filter (delta function)
 l = int(np.ceil(3 / Scaled_gap))
-p_delta = delta_func(s, l, Scaled_gap) # Delta function evaluated at each s[i]
+p_delta = delta_func(s, 700, Scaled_gap) # Delta function evaluated at each s[i]
 
 # Step function
 coefs_step, k = step_func(deg=int(5 * np.sqrt(2) / Scaled_gap), delta = Scaled_gap, mu = Scaled_gap / 2)
@@ -74,5 +62,4 @@ for name, p_s in projectors.items():
     phi = P @ psi_HF # applying the projectors onto the HF state
     phi = phi / np.linalg.norm(phi)
     energy = np.vdot(phi, H @ phi).real
-    overlap = np.vdot(phi, P_exact @ phi).real
     print(f"{name:18s} E = {energy:.6f}")
