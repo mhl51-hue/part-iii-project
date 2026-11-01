@@ -9,12 +9,12 @@ from qiskit.quantum_info import Statevector
 from qiskit_nature.second_q.circuit.library import HartreeFock
 from qiskit_nature.second_q.mappers import JordanWignerMapper
 from qiskit import QuantumCircuit
-from FermiHubbard import fermihubbard_matrix
+from FermiHubbard import H
 import numpy as np
 
 # Creating the Hartree Fock occupation state
 hartreefock_circuit = HartreeFock(
-    num_spatial_orbitals=4,
+    num_spatial_orbitals=2,
     num_particles=(1,1), # n_up, n_down
     qubit_mapper=JordanWignerMapper(),
 )
@@ -29,9 +29,8 @@ if __name__ == "__main__":
 '''
 Checking number of electrons in HF state and fermi hubbard state
 '''
-H = fermihubbard_matrix.toarray()
 
-n_sites = 4
+n_sites = 2
 idx = np.arange(2 ** (2*n_sites))
 n_up = np.array([bin(i & (2**n_sites - 1)).count("1") for i in idx])
 n_dn = np.array([bin(i >> n_sites).count("1") for i in idx])
