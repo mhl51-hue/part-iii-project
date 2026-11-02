@@ -80,7 +80,7 @@ def step_func(deg, delta, mu, epsilon = 1e-2):
     k is a scaling factor derived from delta and epsilon, controls steepness of erf
     '''
     k = np.sqrt(2) / delta * np.sqrt(np.log(2 / (np.pi * epsilon**2)))
-    f = lambda x: 0.5 * (1 - erf(k * (x - mu)))
+    f = lambda x: 0.5 * (1 - erf(k * (np.abs(x) - mu)))
     return Cheb.chebinterpolate(f, deg), k
 
 def step(x, coefs):
@@ -89,30 +89,28 @@ def step(x, coefs):
 '''
 plotting the three proctors on their own to check their shapes
 '''
-
-x = np.linspace(-1, 1, 2000)
-fig, ax = plt.subplots(1, 3, figsize=(12, 3.5))
-
-# Wall-Chebyshev
-for m in (5, 10, 20):
-    ax[0].plot(x, Cheb.chebval(x, wall_cheb_coefs(m)), label=f'm={m}')
-ax[0].set_title("wall-Chebyshev")
-
-# Eigenstate filter
-for l in (10, 20):
-    ax[1].plot(x, delta_func(x, l, 0.2), label=f'l={l}')
-ax[1].set_title("eigenstate filter, Delta=0.2")
-
-# Step function
-for d in (50, 150):
-    coefs_step, k = step_func(deg=d, delta=0.075, mu=0)
-    ax[2].plot(x, step(x, coefs_step), label=f'degree={d}')
-ax[2].set_title("step, delta=0.075")
-
-for a in ax:
-    a.set_xlabel("x")
-    a.legend()
-plt.tight_layout()
-
 if __name__ == "__main__":
+    x = np.linspace(-1, 1, 2000)
+    fig, ax = plt.subplots(1, 3, figsize=(12, 3.5))
+
+    # Wall-Chebyshev
+    for m in (5, 10, 20):
+        ax[0].plot(x, Cheb.chebval(x, wall_cheb_coefs(m)), label=f'm={m}')
+    ax[0].set_title("wall-Chebyshev")
+
+    # Eigenstate filter
+    for l in (10, 20):
+        ax[1].plot(x, delta_func(x, l, 0.2), label=f'l={l}')
+    ax[1].set_title("eigenstate filter, Delta=0.2")
+
+    # Step function
+    for d in (50, 150):
+        coefs_step, k = step_func(deg=d, delta=0.075, mu=0)
+        ax[2].plot(x, step(x, coefs_step), label=f'degree={d}')
+    ax[2].set_title("step, delta=0.075")
+
+    for a in ax:
+        a.set_xlabel("x")
+        a.legend()
+    plt.tight_layout()
     plt.show()
