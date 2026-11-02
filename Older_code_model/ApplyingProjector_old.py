@@ -5,8 +5,8 @@ and then acting that on the Hartree fock state vector
 
 import numpy as np
 from numpy.polynomial import chebyshev as Cheb
-from FermiHubbard_rough import (Emax_full, E0, H, E1)
-from HartreeFock_old import psi_HF
+from Older_code_model.FermiHubbard_rough import (Emax_full, E0, H, E1)
+from Older_code_model.HartreeFock_old import psi_HF
 from Projectors import (
     wall_cheb,
     delta_func,

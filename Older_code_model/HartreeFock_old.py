@@ -9,7 +9,7 @@ from qiskit.quantum_info import Statevector
 from qiskit_nature.second_q.circuit.library import HartreeFock
 from qiskit_nature.second_q.mappers import JordanWignerMapper
 from qiskit import QuantumCircuit
-from FermiHubbard_rough import H
+from Older_code_model.FermiHubbard_rough import H
 import numpy as np
 
 # Creating the Hartree Fock occupation state

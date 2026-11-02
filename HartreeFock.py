@@ -1,42 +1,23 @@
 '''
 Setting the Hartree Fock state
-Using n = 4 to match the Fermi hubbard model set up
-
-Produces psi_HF which is the state vector
+Using n = 2 to match the Fermi hubbard model set up
 '''
 
-from qiskit.quantum_info import Statevector
-from qiskit_nature.second_q.circuit.library import HartreeFock
-from qiskit_nature.second_q.mappers import JordanWignerMapper
-from qiskit import QuantumCircuit
-from FermiHubbard import H
 import numpy as np
 
-# Creating the Hartree Fock occupation state
-hartreefock_circuit = HartreeFock(
-    num_spatial_orbitals=2,
-    num_particles=(1,1), # n_up, n_down
-    qubit_mapper=JordanWignerMapper(),
-)
+# Creating HF state for the 4x4 subspace taken from the larger fermihubbard matrix
+def hartree_fock_state(subspace):
+    '''
+    returns (psi, energy), the Neel determinant as a vector
+    '''
+    psi = np.zeros(len(subspace.H))
+    psi[subspace.neel] = 1.0
+    return psi, float(subspace.H[subspace.neel, subspace.neel])
 
-psi_HF = Statevector(hartreefock_circuit).data
-
-# Checking the statevector
+# Printing HF energy + overlap with ground state for each value of U, HF E should be zero for all U
 if __name__ == "__main__":
-    a = np.argmax(np.abs(psi_HF))
-    print("basis index:", a, "bits:", format(a, "08b"))
-
-'''
-Checking number of electrons in HF state and fermi hubbard state
-'''
-
-n_sites = 2
-idx = np.arange(2 ** (2*n_sites))
-n_up = np.array([bin(i & (2**n_sites - 1)).count("1") for i in idx])
-n_dn = np.array([bin(i >> n_sites).count("1") for i in idx])
-
-evals, evecs = np.linalg.eigh(H)
-if __name__ == "__main__":
-    for name, v in [("HF state", psi_HF), ("ground state", evecs[:,0])]:
-        p = np.abs(v) ** 2
-        print(f"{name:13s} <N_up> = {np.sum(p * n_up):.3f} <N_dn> = {np.sum(p * n_dn):.3f}")
+    from FermiHubbard import fermihubbard_4x4
+    for U in (1, 2, 4, 8):
+        s = fermihubbard_4x4(U)
+        psi, e = hartree_fock_state(s)
+        print(f"U={U}: HF energy = {e:.3f}, overlap with ground state = {abs(s.V[:, 0] @ psi):.3f}")

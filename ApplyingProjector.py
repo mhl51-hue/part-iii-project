@@ -5,61 +5,86 @@ and then acting that on the Hartree fock state vector
 
 import numpy as np
 from numpy.polynomial import chebyshev as Cheb
-from FermiHubbard import (Emax, E0, H, E1)
-from HartreeFock import psi_HF
+from HartreeFock import hartree_fock_state
 from Projectors import (
     wall_cheb,
     delta_func,
     step_func,
+    step
 )
 
-R = 1.01 * (Emax - E0)
-M = (H - E0 * np.eye(H.shape[0])) / R
-Scaled_gap = (E1 - E0) / R # Scaled energy gap
+projectors = ("Eigenstate filter", "Step function", "wall-Chebyshev")
 
-# Single value decomposition SVD, M = U diag(s) V†
-U, s, Vt = np.linalg.svd(M)
-V = Vt.conj().T
+def estimate_energy_and_range(subspace, ground_state_energy, beta=1.1):
+    '''
+    S: estimate of the ground state energy
+    R: estimate spectral range R = beta * E_N-1 - s (eq. 21), where E_N-1 is the Gershgorin
+    estimate of the highest eigenvalue (eq. 20): diagonal element plus sum of off-diagonals
+    '''
+    H = subspace.H
+    gersh = max(H[i,i] + np.sum(np.abs(H[i])) - abs(H[i,i]) for i in range(len(H)))
+    S = subspace.E0 if ground_state_energy else H[subspace.neel, subspace.neel]
+    return S, beta * gersh - S
+
+def projector_weighted(projector, E, S, R, order, gap):
+    '''
+    Scales the projectors using R and S
+    '''
+    gap_scaled = gap / R
+    x = (E - S) / R
+    if projector == "wall-Chebyshev":
+        return wall_cheb(E, S, R, order)
+    if projector == "Eigenstate filter":
+        return delta_func(x, order // 2, gap_scaled)
+    if projector == "Step function":
+        coefs, _ = step_func(order, delta=gap_scaled / 4, mu=gap_scaled / 2)
+        return step(x, coefs)
+    raise ValueError(projector)
+
+def apply_projector(subspace, filter_E, psi0):
+    '''
+    P = V diag(f(E)) V^T, applied to psi0 and renormalised
+    Returns (energy, fidelity with exact ground state)
+    filter_E, filter functions evaluated at energies E
+    '''
+    P = subspace.V @ np.diag(filter_E) @ subspace.V.T
+    phi = P @ psi0
+    norm = np.linalg.norm(phi)
+    if not np.isfinite(norm) or norm < 1e-300: # projector anihilated the state
+        return np.nan, np.nan
+    phi = phi / norm
+    energy = phi @ subspace.H @ phi
+    fidelity = abs(subspace.V[:, 0] @ phi)
+    return energy, fidelity
+
+def evaluate_orders(subspace, ground_state_energy, max_order=150, beta=1.1):
+    '''
+    Apply the projectors to the HF state for differing polynomial orders
+    The filter and step func are even in x, so only even orders are meaningful for them
+    '''
+    psi0, _ = hartree_fock_state(subspace)
+    S, R = estimate_energy_and_range(subspace, ground_state_energy, beta)
+
+    results = {}
+    for projector in projectors:
+        step_size = 2 if projector in ("Eigenstate filter", "Step function") else 1
+        orders = np.arange(0, max_order + 1, step_size)
+        out = np.array([apply_projector(subspace,
+                                        projector_weighted(projector, subspace.E, S, R, int(m), subspace.gap),
+                                        psi0)
+                                    for m in orders])
+        results[projector] = dict(orders=orders, energy=out[:, 0], fidelity=out[:, 1])
+    return dict(U=subspace.U, S=S, R=R, E0=subspace.E0, projectors=results)
 
 '''
-Applying the polynomial functions to the single value matrix
-1. Wall-Chebyshev
-2. Eigenstate filter
-3. Step function
+Checking projector ability for U=1
+prints for initial state of known E0 and for HF energy
 '''
-
-# Wall-Chebyshev function
-m = int(np.ceil(2 / Scaled_gap))
-p_wallcheb = wall_cheb(s * R, 0.0, R, 110) # Wall-Chebyshev projector evaluated at each s[i]
-
-# Eigenstate filter (delta function)
-l = int(np.ceil(3 / Scaled_gap))
-p_delta = delta_func(s, 700, Scaled_gap) # Delta function evaluated at each s[i]
-
-# Step function
-coefs_step, k = step_func(deg=int(5 * np.sqrt(2) / Scaled_gap), delta = Scaled_gap, mu = Scaled_gap / 2)
-p_step = Cheb.chebval(s, coefs_step) # Step function evaluated at each s[i]
-
-
-'''
-Applying the polynomials to singular values
-P = V diag(p(s)) V†
-'''
-
-def apply_projector(p_s):
-    return V @ np.diag(p_s) @ V.conj().T
-
-projectors = {
-    "wall_Chebyshev": p_wallcheb,
-    "eigenstate filter": p_delta,
-    "step function": p_step,
-}
-
-print("HF energy:", np.vdot(psi_HF, H @ psi_HF).real, " E0:", np.linalg.eigvalsh(H)[0])
-
-for name, p_s in projectors.items():
-    P = apply_projector(p_s)
-    phi = P @ psi_HF # applying the projectors onto the HF state
-    phi = phi / np.linalg.norm(phi)
-    energy = np.vdot(phi, H @ phi).real
-    print(f"{name:18s} E = {energy:.6f}")
+if __name__ == "__main__":
+    from FermiHubbard import fermihubbard_subspace
+    subspace = fermihubbard_subspace(1)
+    for exact in (True, False):
+        r = evaluate_orders(subspace, exact, max_order=60)
+        print(f"U=1, S {'=E0' if exact else '= HF energy'}: S = {r['S']:.3f}, R = {r['R']:.3f}")
+        for m, d in r["projectors"].items():
+            print(f"   {m:18s} final E = {d['energy'][-1]: .4f}   fidelity = {d['fidelity'][-1]:.4f}")
