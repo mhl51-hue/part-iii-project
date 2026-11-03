@@ -47,6 +47,6 @@ if __name__ == "__main__":
      plot_figure(fig4, "fig4.png", "Figure 4: ground state energy known a priori (S = E0)")
 
      fig5 = run_all(U_vals, ground_state_energy=False, max_order=150)
-     plot_figure(fig5, "fig5.png", "Figure 5: ground state energy known a priori (S = E0)")
+     plot_figure(fig5, "fig5.png", "Figure 5: ground state energy form Hartree Fock approximation")
 
      plt.show()

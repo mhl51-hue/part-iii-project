@@ -61,6 +61,7 @@ def half_filling_regime(H, tol=1e-9):
     bit = lambda j: (idx >> j) & 1
     for up in ((0, 1), (2, 3), (0, 2), (1, 3)):
         dn = tuple(sorted(set(range(4)) - set(up)))
+
         N_up = np.diag(sum(bit(j) for j in up).astype(float))
         N_dn = np.diag(sum(bit(j) for j in dn).astype(float))
         if np.linalg.norm(H @ N_up - N_up @ H) < tol and np.linalg.norm(H @ N_dn - N_dn @ H) < tol:
@@ -70,9 +71,12 @@ def half_filling_regime(H, tol=1e-9):
 
     indices = [i for i in range(16)
                if sum((i >> j) & 1 for j in up) == 1 and sum((i >> j) & 1 for j in dn) == 1]
+    
     Hs = np.real(H[np.ix_(indices, indices)])
+
     # Neel determinants have no double occupancy -> diagonal energy = 0
     neel = [k for k in range(len(indices)) if abs(Hs[k, k]) < tol]
+
     if Hs.shape != (4, 4,) or not neel:
         raise ValueError("worng matrix structure")
 

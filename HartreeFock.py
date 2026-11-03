@@ -16,8 +16,8 @@ def hartree_fock_state(subspace):
 
 # Printing HF energy + overlap with ground state for each value of U, HF E should be zero for all U
 if __name__ == "__main__":
-    from FermiHubbard import fermihubbard_4x4
+    from FermiHubbard import fermihubbard_subspace
     for U in (1, 2, 4, 8):
-        s = fermihubbard_4x4(U)
+        s = fermihubbard_subspace(U)
         psi, e = hartree_fock_state(s)
         print(f"U={U}: HF energy = {e:.3f}, overlap with ground state = {abs(s.V[:, 0] @ psi):.3f}")
