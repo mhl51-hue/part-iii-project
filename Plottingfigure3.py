@@ -5,9 +5,9 @@ from SuccessProbability import p_succ_wallcheb_approx
 colours = {2: 'blue', 4: 'orange', 6: 'lightblue', 8: 'green', 10: 'yellow'}
 
 fig, ax = plt.subplots(figsize=(3.2, 4.6))
-a_coarse = np.linspace(1, 3, 21)
+a = np.linspace(1, 3, 21)
 for m in (2, 4, 6, 8, 10):
-    ax.plot(a_coarse, p_succ_wallcheb_approx(a_coarse, m), color=colours[m], lw=1.2, label=f"m = {m}")
+    ax.plot(a, p_succ_wallcheb_approx(a, m), color=colours[m], lw=1.2, label=f"m = {m}")
 ax.set_yscale("log")
 ax.set_ylim(1e-8, 1)
 ax.set_xticks([1, 2, 3])
