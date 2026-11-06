@@ -13,7 +13,6 @@ from qiskit_nature.second_q.hamiltonians.lattices import (
 )
 from qiskit_nature.second_q.problems import LatticeModelProblem
 from qiskit_nature.second_q.mappers import JordanWignerMapper
-from qiskit_nature.second_q.operators import FermionicOp
 from dataclasses import dataclass
 
 def fermihubbardmodel(U):
@@ -42,13 +41,14 @@ def fermihubbardmodel(U):
 
     # Extracting the 2nd quantised hamiltonian from the fermi hubbard model
     fermihubbard_problem = LatticeModelProblem(fermi_hubbard_model)
-    fermihubbard_op, aux_ops = fermihubbard_problem.second_q_ops() # Fermihubbar_op is the 2nd quantised H
+    fermihubbard_op, _ = fermihubbard_problem.second_q_ops() # Fermihubbar_op is the 2nd quantised H
 
     # Fermihubbard_op --JW mapping--> qubit hamiltonian --> matrix form --> array
     mapper = JordanWignerMapper()
-    H = mapper.map(fermihubbard_op).to_matrix(sparse=True).toarray()
+    qubit_H = mapper.map(fermihubbard_op)
+    H_full = qubit_H.to_matrix(sparse=True).toarray()
 
-    return H
+    return qubit_H, H_full
 
 def half_filling_regime(H, tol=1e-9):
     '''
@@ -69,28 +69,29 @@ def half_filling_regime(H, tol=1e-9):
     else:
         raise ValueError("check line lattice size")
 
-    indices = [i for i in range(16)
+    keep = [i for i in range(16)
                if sum((i >> j) & 1 for j in up) == 1 and sum((i >> j) & 1 for j in dn) == 1]
     
-    Hs = np.real(H[np.ix_(indices, indices)])
+    H = np.real(H[np.ix_(keep, keep)])
 
     # Neel determinants have no double occupancy -> diagonal energy = 0
-    neel = [k for k in range(len(indices)) if abs(Hs[k, k]) < tol]
+    neel = [k for k in range(4) if abs(H[k, k]) < tol]
 
-    if Hs.shape != (4, 4,) or not neel:
-        raise ValueError("worng matrix structure")
+    if not neel:
+        raise ValueError("non zero energy det in subspace")
 
-    return Hs, neel[0], indices
+    return H, neel[0]
 
 # creating class for the fermi hubbard model
 @dataclass
 class FermiHubbard_class:
     U: float
-    H: np.ndarray
+    qubit_H: object # used for alpha value
+    H_full: np.ndarray # full 16x16 matrix
+    H: np.ndarray # half filled 4x4 Hamiltonian
     E: np.ndarray
     V: np.ndarray
     neel: int
-    indices: int
 
     @property
     def E0(self):
@@ -108,10 +109,10 @@ class FermiHubbard_class:
 
 # Calling the model and the slicing function to create the fermihubbard 4x4 matrix
 def fermihubbard_subspace(U):
-    H_subspace = fermihubbardmodel(U)
-    H, neel, indices = half_filling_regime(H_subspace)
+    qubit_H, H_full = fermihubbardmodel(U)
+    H, neel = half_filling_regime(H_full)
     E, V = np.linalg.eigh(H)
-    return FermiHubbard_class(U=U, H=H, E=E, V=V, neel=neel, indices=indices)
+    return FermiHubbard_class(U=U, qubit_H=qubit_H, H_full=H_full, H=H, E=E, V=V, neel=neel)
 
 # Defining exact theoretical groundstate energy
 def analytic_E0(U):

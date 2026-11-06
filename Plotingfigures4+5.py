@@ -1,9 +1,11 @@
 
-import numpy as np
 import matplotlib.pyplot as plt
 
 from FermiHubbard import fermihubbard_subspace, analytic_E0
-from ApplyingProjector import evaluate_orders, projectors
+from ApplyingProjector import (
+      evaluate_orders, 
+      projectors,
+      )
 
 U_vals = (1, 2, 4, 8)
 colours = {1: "hotpink", 2: "blue", 4: "orange", 8: "purple"}
