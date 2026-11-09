@@ -50,10 +50,9 @@ def fermihubbardmodel(U):
 
     return qubit_H, H_full
 
-def half_filling_regime(H, tol=1e-9):
+def half_filling_indices(H, tol=1e-9):
     '''
-    Current form of H is a 16x16 matrix, function will slice matrix down to 4x4
-    m_s = 0
+    Indices of the 16x16 matrix
     '''
 
     H = np.asarray(H)
@@ -69,9 +68,14 @@ def half_filling_regime(H, tol=1e-9):
     else:
         raise ValueError("check line lattice size")
 
-    keep = [i for i in range(16)
+    return [i for i in range(16)
                if sum((i >> j) & 1 for j in up) == 1 and sum((i >> j) & 1 for j in dn) == 1]
     
+def half_filling_regime(H, tol=1e-9):
+    '''
+    Slicing the 16x16 matrix down to a 4x4
+    '''
+    keep = half_filling_indices(H, tol)
     H = np.real(H[np.ix_(keep, keep)])
 
     # Neel determinants have no double occupancy -> diagonal energy = 0

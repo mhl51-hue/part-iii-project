@@ -73,7 +73,7 @@ def p_succ_delta(E, c, S, alpha_delta, l, gap):
     return projection_outcome(E, c, delta_func(x, l, gap / alpha_delta))
 
 # step function (eqs. E20-25)
-def p_succ_step(E, c, S, alpha_step, gap, deg=50, epsilon=1e-2):
+def p_succ_step(E, c, S, alpha_step, gap, deg=500, epsilon=1e-2):
     g = gap / alpha_step
     coefs, _ = step_func(deg=deg, delta=g / 4, mu=g/2, epsilon=epsilon)
     coefs /= max(1.0, np.max(np.abs(step(np.linspace(-1, 1, 4001), coefs))))
@@ -83,17 +83,16 @@ def p_succ_step(E, c, S, alpha_step, gap, deg=50, epsilon=1e-2):
 def success_results(subspace, psi0, ground_state_energy, m=10):
     S, R = estimate_energy_and_range(subspace, ground_state_energy)
     c = subspace.V.T @ psi0
-    mu = S + subspace.gap/2
 
     alpha_wall = lcu_alpha(subspace.qubit_H, 2/R, -(2*S/R+1))
     norm = np.max(np.abs(2*(np.linalg.eigvalsh(subspace.H_full)-S)/R-1))
     assert alpha_wall >= norm - 1e-9, f"alpha = {alpha_wall:.3f} < ||H-|| = {norm:.3f}: not a valid block encoding"
 
     return dict(
-        S=S, R=R, c0_sq=c[0] ** 2, alpha_H=lcu_alpha(subspace.qubit_H), alpha_wall=lcu_alpha(subspace.qubit_H, 2/R, -(2*S/R+1)), norm_wall = norm,
+        S=S, R=R, c0_sq=c[0] ** 2, alpha_H=lcu_alpha(subspace.qubit_H), alpha_wall=alpha_wall, norm_wall = norm,
         wall=p_succ_wallcheb(subspace.E, c, S, R, lcu_alpha(subspace.qubit_H, 2/R, -(2*S/R+1)), m),
         filter=p_succ_delta(subspace.E, c, S, lcu_alpha(subspace.qubit_H, shift=-S), m // 2, subspace.gap),
-        step=p_succ_step(subspace.E, c, mu, lcu_alpha(subspace.qubit_H, shift=-mu), subspace.gap),
+        step=p_succ_step(subspace.E, c, S, lcu_alpha(subspace.qubit_H, shift=-S), subspace.gap),
     )
 
 if __name__ == "__main__":
@@ -111,3 +110,4 @@ if __name__ == "__main__":
             print(f"U={U} S={'E0' if exact else 'HF'}:"
                   f"Wall-chebyshev(QSVT1):{r['wall']['p']:.2e} [wallcheb success approx: {shortcut}]  "
                   f"eigenstate filter:{r['filter']['p']:.3f}  step function:{r['step']['p']:.3f}")
+
