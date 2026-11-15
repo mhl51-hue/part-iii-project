@@ -67,6 +67,27 @@ def p_succ_wallcheb_approx(alpha, m):
     # Can only use for S=E0
     return Cheb.chebval(-1.0 / np.asarray(alpha, dtype=float), wall_cheb_coefs(m)) ** 2
 
+# wall-Chebyshev with rescaled nodes P2 (eqs. 41-42)
+def wallcheb_P2(y, alpha, m):
+    '''
+    P2(y) = prod_v (y - a_v / alpha),  y = H~/alpha,  nodes a_v = -cos(v pi / (m + 1/2)).
+    Eq. 41 does not say how it is scaled; QSVT needs |P2| <= 1, so it is divided by its maximum on [-1, 1].
+    That choice reproduces the GQSVT 2 panel of Figure 3 (all curves start at 1 for alpha = 1).
+    '''
+    roots = -np.cos(np.arange(1, m + 1) * np.pi / (m + 0.5)) / alpha
+    prod = lambda z: np.prod(np.asarray(z, dtype=float)[..., None] - roots, axis=-1)
+    return prod(y) / np.max(np.abs(prod(np.linspace(-1, 1, 2001))))
+
+def p_succ_wallcheb_P2(E, c, S, R, alpha, m):
+    x = 2 * (np.asarray(E) - S) / R - 1
+    return projection_outcome(E, c, wallcheb_P2(x / alpha, alpha, m))
+ 
+ 
+def p_succ_wallcheb_P2_approx(alpha, m):
+    '''Eq. 42 shortcut p / c0^2 = P2(-1/alpha)^2. Only for S = E0.'''
+    return float(wallcheb_P2(-1.0 / alpha, alpha, m)) ** 2
+
+
 # eigenstate filter (eqs 9., E16-19)
 def p_succ_delta(E, c, S, alpha_delta, l, gap):
     x = (np.asarray(E) - S) / alpha_delta

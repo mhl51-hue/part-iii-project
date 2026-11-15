@@ -1,7 +1,7 @@
 
 import matplotlib.pyplot as plt
 
-from FermiHubbard import fermihubbard_subspace, analytic_E0
+from FermiHubbard import fermihubbard_subspace
 from ApplyingProjector import (
       evaluate_orders, 
       projectors,

@@ -1,5 +1,5 @@
 '''
-Sampling the terms of the Hamiltonian
+Deterministic sampling the terms of the Hamiltonian
 1. defining the truncation and % of hamiltonian functions
 2. pauli sampling
 3. second quantised sampling
@@ -19,7 +19,7 @@ from Projectors import (
     step_func,
     step
     )
-from SuccessProbability import lcu_alpha
+from SuccessProbability import lcu_alpha, wallcheb_P2
 from FermiHubbard import fermihubbard_subspace
 
 '''
@@ -118,7 +118,8 @@ def evaluate(sampled_op, subspace, ground_state_energy, m=10, deg=1000, epsilon=
     coefs /= max(1.0, np.max(np.abs(step(np.linspace(-1, 1, 4000), coefs))))
 
     weights = {
-        "wall_cheb": Cheb.chebval((2 * (E - S) / R - 1) / alpha_wall, wall_cheb_coefs(m)),
+        "wall_cheb": wallcheb_P2((2 * (E - S) / R - 1) / alpha_wall, alpha_wall, m),
+        #"wall_cheb": Cheb.chebval((2 * (E - S) / R - 1) / alpha_wall, wall_cheb_coefs(m)),
         "delta_func": delta_func((E - S) / alpha_stepdelta, m // 2, g),
         "step_func": step((E - S) / alpha_stepdelta, coefs),
     }
@@ -134,7 +135,7 @@ def evaluate(sampled_op, subspace, ground_state_energy, m=10, deg=1000, epsilon=
 
 if __name__ == "__main__":
     mapper = JordanWignerMapper()
-    U = 4
+    U=1
     subspace = fermihubbard_subspace(U)
     n_pauli = len(subspace.qubit_H.simplify().to_list()) - 1 # excludes identity term
     print(f"\nU={U}: {n_pauli} non-identity pauli terms")
