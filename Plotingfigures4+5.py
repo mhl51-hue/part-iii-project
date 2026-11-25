@@ -1,4 +1,6 @@
-
+'''
+Figures 4 and 5: energy and fidelity against polynomial order
+'''
 import matplotlib.pyplot as plt
 
 from FermiHubbard import fermihubbard_subspace
