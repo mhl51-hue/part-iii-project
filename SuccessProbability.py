@@ -3,9 +3,12 @@ Success Probability
 
 Calculates the projection outcomes on the state as well as the alpha value from LCU block encoding
 Calculates the success probabilitly of each projector
-'''
 
-from dataclasses import dataclass
+wall-Chebyshev encodings (section 4 of the paper):
+    Product: product of LCUs, eqs. 34-36
+    P1: GQSVT direct encoding, eqs. 39-40
+    P2: GQSVT with rescaled nodes, eqs. 41-42
+'''
 
 import numpy as np
 from numpy.polynomial import chebyshev as Cheb
@@ -17,6 +20,8 @@ from Projectors import (
     step,
     )
 from ApplyingProjector import estimate_energy_and_range
+from FermiHubbard import fermihubbard_subspace
+from HartreeFock import hartree_fock_state
 
 '''
 Calculating alpha value
@@ -41,7 +46,6 @@ def projection_outcome(E, c, w):
 def lcu_alpha(qubit_H, scale=1.0, shift=0.0):
     '''
     returns alpha, the sub normalisation of the LCU block encoding
-
     '''
     h_id = rest = 0
     for label, coef in qubit_H.simplify().to_list():
@@ -52,22 +56,60 @@ def lcu_alpha(qubit_H, scale=1.0, shift=0.0):
     return abs(scale) * rest + abs(scale * h_id + shift)
 
 '''
-Calculating the success probabilities of the projectors
-1. wall-chebyshev
-2. delta function
-3. step function
+1. Wall-chebyshev success probability
+i. product form
+ii. P1
+iii. P2
 '''
 
-# wall-chebyshev GQSVT encoding (eqs. 39-40)
-def p_succ_wallcheb(E, c, S, R, alpha, m):
+def wallcheb_nodes_scaled(m):
+    '''
+    nodes of the order m wall-Chebyshev polynomial in the rescaled variable x (eigenvalues of H~)
+    a~_v = -cos(v pi / (m + 1/2)), v = 1..m  (eq. 16 mapped through eq. 14)
+    '''
+    return -np.cos(np.arange(1, m + 1) * np.pi / (m + 0.5))
+
+# i. wall-Chebyshev product of LCUs (eqs. 34-36)
+def product_alphas(qubit_H, S, R, m):
+    '''
+    alpha_v of every factor in the product form
+    factor v is H~ - a~_v = (2/R) H - (2S/R + 1 + a~_v) I, block encoded on its own with LCU,
+    so alpha_v is the LCU 1-norm of that operator (identity coefficient includes the shift a~_v)
+    '''
+    return np.array([lcu_alpha(qubit_H, 2/R, -(2*S/R + 1 + a)) for a in wallcheb_nodes_scaled(m)])
+
+def wallcheb_product(x, alphas):
+    '''
+    PRODUCT form weight on an eigenvalue x of H~: prod_v (x - a~_v) / alpha_v
+    alphas: the m values alpha_v from product_alphas
+    '''
+    nodes = wallcheb_nodes_scaled(len(alphas))
+    return np.prod((np.asarray(x, dtype=float)[..., None] - nodes) / np.asarray(alphas), axis=-1)
+
+def p_succ_wallcheb_product(E, c, S, R, alphas):
+    '''PRODUCT form success probability, eq. 35'''
+    x = 2 * (np.asarray(E) - S) / R - 1
+    return projection_outcome(E, c, wallcheb_product(x, alphas))
+
+def p_succ_wallcheb_product_approx(alpha, m):
+    '''
+    Eq. 36 shortcut p / c0^2 = prod_v (E0 - a_v)^2 / alpha_v^2. Only for S = E0 and large m.
+    Uses the upper bound alpha_v = alpha + |a~_v| (as in the Product panel of Figure 3), alpha is the alpha of H~.
+    '''
+    nodes = wallcheb_nodes_scaled(m)
+    alpha = np.asarray(alpha, dtype=float)[..., None]
+    return np.prod((-1 - nodes) ** 2 / (alpha + np.abs(nodes)) ** 2, axis=-1)
+
+# ii. wall-Chebyshev P1, GQSVT direct encoding (eqs. 39-40)
+def p_succ_wallcheb_P1(E, c, S, R, alpha, m):
     x = 2 * (np.asarray(E) - S) / R - 1 # eigenvalues of H_tilda
     return projection_outcome(E, c, Cheb.chebval(x / alpha, wall_cheb_coefs(m)))
 
-def p_succ_wallcheb_approx(alpha, m):
-    # Can only use for S=E0
+def p_succ_wallcheb_P1_approx(alpha, m):
+    # P1 approx, eq. 40. Can only use for S=E0
     return Cheb.chebval(-1.0 / np.asarray(alpha, dtype=float), wall_cheb_coefs(m)) ** 2
 
-# wall-Chebyshev with rescaled nodes P2 (eqs. 41-42)
+# iii. wall-Chebyshev P2, GQSVT with rescaled nodes (eqs. 41-42)
 def wallcheb_P2(y, alpha, m):
     '''
     P2(y) = prod_v (y - a_v / alpha),  y = H~/alpha,  nodes a_v = -cos(v pi / (m + 1/2)).
@@ -84,16 +126,22 @@ def p_succ_wallcheb_P2(E, c, S, R, alpha, m):
  
  
 def p_succ_wallcheb_P2_approx(alpha, m):
-    '''Eq. 42 shortcut p / c0^2 = P2(-1/alpha)^2. Only for S = E0.'''
+    # P2 approx, eq. 40. Can only use for S=E0
     return float(wallcheb_P2(-1.0 / alpha, alpha, m)) ** 2
 
 
-# eigenstate filter (eqs 9., E16-19)
+'''
+2. Delta function 
+(eqs 9., E16-19)
+'''
 def p_succ_delta(E, c, S, alpha_delta, l, gap):
     x = (np.asarray(E) - S) / alpha_delta
     return projection_outcome(E, c, delta_func(x, l, gap / alpha_delta))
 
-# step function (eqs. E20-25)
+'''
+3. Step function 
+(eqs. E20-25)
+'''
 def p_succ_step(E, c, S, alpha_step, gap, deg=500, epsilon=1e-2):
     g = gap / alpha_step
     coefs, _ = step_func(deg=deg, delta=g / 4, mu=g/2, epsilon=epsilon)
@@ -109,17 +157,19 @@ def success_results(subspace, psi0, ground_state_energy, m=10):
     norm = np.max(np.abs(2*(np.linalg.eigvalsh(subspace.H_full)-S)/R-1))
     assert alpha_wall >= norm - 1e-9, f"alpha = {alpha_wall:.3f} < ||H-|| = {norm:.3f}: not a valid block encoding"
 
+    alphas = product_alphas(subspace.qubit_H, S, R, m)
+
     return dict(
         S=S, R=R, c0_sq=c[0] ** 2, alpha_H=lcu_alpha(subspace.qubit_H), alpha_wall=alpha_wall, norm_wall = norm,
-        wall=p_succ_wallcheb(subspace.E, c, S, R, lcu_alpha(subspace.qubit_H, 2/R, -(2*S/R+1)), m),
+        alpha_product=alphas,
+        wall_product=p_succ_wallcheb_product(subspace.E, c, S, R, alphas),   
+        wall_P1=p_succ_wallcheb_P1(subspace.E, c, S, R, alpha_wall, m),          
+        wall_P2=p_succ_wallcheb_P2(subspace.E, c, S, R, alpha_wall, m),
         filter=p_succ_delta(subspace.E, c, S, lcu_alpha(subspace.qubit_H, shift=-S), m // 2, subspace.gap),
         step=p_succ_step(subspace.E, c, S, lcu_alpha(subspace.qubit_H, shift=-S), subspace.gap),
     )
 
 if __name__ == "__main__":
-    from FermiHubbard import fermihubbard_subspace
-    from HartreeFock import hartree_fock_state
-
     m=10
     print(f"Success probability of the projectors, all with m={m}")
     for U in (1, 2, 4, 8):
@@ -127,8 +177,9 @@ if __name__ == "__main__":
         psi0, _ = hartree_fock_state(subspace)
         for exact in (True, False):
             r = success_results(subspace, psi0, exact, m)
-            shortcut = f"{r['c0_sq'] * p_succ_wallcheb_approx(r['alpha_wall'], m):.2e}" if exact else "n/a"
-            print(f"U={U} S={'E0' if exact else 'HF'}:"
-                  f"Wall-chebyshev(QSVT1):{r['wall']['p']:.2e} [wallcheb success approx: {shortcut}]  "
+            shortcut = f"{r['c0_sq'] * p_succ_wallcheb_product_approx(r['alpha_wall'], m):.2e}" if exact else "n/a"
+            print(f"U={U} S={'E0' if exact else 'HF'}: "
+                  f"wall-Chebyshev product:{r['wall_product']['p']:.2e} [eq. 36 shortcut, alpha_v upper bound: {shortcut}]  "
+                  f"(comparison: P1 {r['wall_P1']['p']:.2e}, P2 {r['wall_P2']['p']:.2e})  "
                   f"eigenstate filter:{r['filter']['p']:.3f}  step function:{r['step']['p']:.3f}")
 

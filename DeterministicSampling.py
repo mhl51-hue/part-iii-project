@@ -19,7 +19,7 @@ from Projectors import (
     step_func,
     step
     )
-from SuccessProbability import lcu_alpha, wallcheb_P2
+from SuccessProbability import lcu_alpha, wallcheb_P2, product_alphas, wallcheb_product
 from FermiHubbard import fermihubbard_subspace
 
 '''
@@ -98,6 +98,11 @@ def evaluate(sampled_op, subspace, ground_state_energy, m=10, deg=1000, epsilon=
     - alpha is the LCU 1-norm of the sampled operator
     - energy and fidelity are measured against the full hamiltonian and ground state
     - now using the full 16x16 space
+
+    wall-Chebyshev results:
+        "wall_cheb_product": product of LCUs, eq. 35, each factor has its own alpha_v
+        "wall_cheb_P2": GQSVT with rescaled nodes, eq. 42
+        "wall_cheb_P1": GQSVT direct encoding, eq. 40
     '''
     # Full problem embedded in the 16x16 space
     H_full = subspace.qubit_H.to_matrix(sparse=True).toarray()
@@ -111,20 +116,24 @@ def evaluate(sampled_op, subspace, ground_state_energy, m=10, deg=1000, epsilon=
     c = V.conj().T @ psi
 
     # alpha of each projector using sampled H
-    alpha_wall = lcu_alpha(sampled_op, 2/R, -(2*S/R+1))
+    alpha_wall = lcu_alpha(sampled_op, 2/R, -(2*S/R+1)) # alpha of H_tilde (P1 and P2)
+    alpha_product = product_alphas(sampled_op, S, R, m) # alpha_v of each factor H_tilde - a_v (product form)
     alpha_stepdelta = lcu_alpha(sampled_op, shift=-S)
     g = subspace.gap / alpha_stepdelta
     coefs, _ = step_func(deg, delta=g / 4, mu=g / 2, epsilon=epsilon)
     coefs /= max(1.0, np.max(np.abs(step(np.linspace(-1, 1, 4000), coefs))))
 
+    x = 2 * (E - S) / R - 1 # eigenvalues of H~
     weights = {
-        "wall_cheb": wallcheb_P2((2 * (E - S) / R - 1) / alpha_wall, alpha_wall, m),
-        #"wall_cheb": Cheb.chebval((2 * (E - S) / R - 1) / alpha_wall, wall_cheb_coefs(m)),
+        "wall_cheb_product": wallcheb_product(x, alpha_product),                     
+        "wall_cheb_P2": wallcheb_P2(x / alpha_wall, alpha_wall, m),                   
+        "wall_cheb_P1": Cheb.chebval(x / alpha_wall, wall_cheb_coefs(m)),           
         "delta_func": delta_func((E - S) / alpha_stepdelta, m // 2, g),
         "step_func": step((E - S) / alpha_stepdelta, coefs),
     }
 
-    out = dict(alpha_wall=alpha_wall, alpha_stepdelta=alpha_stepdelta, n_pauli=len(sampled_op.simplify().to_list()))
+    out = dict(alpha_wall=alpha_wall, alpha_product=alpha_product, alpha_stepdelta=alpha_stepdelta,
+               n_pauli=len(sampled_op.simplify().to_list()))
     for name, w in weights.items():
         psi_out = V @ (w * c)
         p = np.vdot(psi_out, psi_out).real
@@ -147,6 +156,6 @@ if __name__ == "__main__":
     for name, op in samples:
         r = evaluate(op, subspace, exact)
         print(f"{name:15s} S={'E0' if exact else 'HF'}  n_Pauli={r['n_pauli']:2d} | "
-                        + "  ".join(f"{k}: success_p={r[k]['p']:.2e} Fidelity={r[k]['fidelity']:.3f}" for k in ("wall_cheb", "delta_func", "step_func")))
+                        + "  ".join(f"{k}: success_p={r[k]['p']:.2e} Fidelity={r[k]['fidelity']:.3f}" for k in ("wall_cheb_product", "delta_func", "step_func")))
                     
 
