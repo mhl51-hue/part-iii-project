@@ -15,11 +15,10 @@ from qiskit_nature.second_q.problems import LatticeModelProblem
 from qiskit_nature.second_q.mappers import JordanWignerMapper
 from dataclasses import dataclass
 
-def fermihubbardmodel(U):
+def second_quantised_H(U):
     '''
     Function on strength of onsite interactions U
-    Returns H, the full fermi hubbard matrix
-            num_electrons, electron counting matrix (number of electrons in a given quantum state)
+    Returns fermihubbard_op, the second quantised hamiltonian (before any mapping)
     '''
     # LineLattice initialises the space in which the fermi hubbard model exists, 2 site system
     line_lattice = LineLattice(num_nodes=2, boundary_condition=BoundaryCondition.OPEN)
@@ -42,6 +41,15 @@ def fermihubbardmodel(U):
     # Extracting the 2nd quantised hamiltonian from the fermi hubbard model
     fermihubbard_problem = LatticeModelProblem(fermi_hubbard_model)
     fermihubbard_op, _ = fermihubbard_problem.second_q_ops() # Fermihubbar_op is the 2nd quantised H
+    return fermihubbard_op
+
+def fermihubbardmodel(U):
+    '''
+    Function on strength of onsite interactions U
+    Returns H, the full fermi hubbard matrix
+            num_electrons, electron counting matrix (number of electrons in a given quantum state)
+    '''
+    fermihubbard_op = second_quantised_H(U) # the 2nd quantised H
 
     # Fermihubbard_op --JW mapping--> qubit hamiltonian --> matrix form --> array
     mapper = JordanWignerMapper()
@@ -120,4 +128,4 @@ def fermihubbard_subspace(U):
 
 # Defining exact theoretical groundstate energy
 def analytic_E0(U):
-    return U / 2 - np.sqrt(U ** 2 / 4 + 4 * -1 **2)
+    return U / 2 - np.sqrt(U ** 2 / 4 + 4 * (-1) **2)
