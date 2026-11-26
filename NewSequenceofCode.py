@@ -53,7 +53,7 @@ def average_over_runs_new(sampled_H, subspace, use_exact_S, m, factors_per_sampl
     '''
     p and fideility are computed for every run and then averaged
     p: geometric mean over runs
-    p_mean: arithmetic mean (expected success probability of the protocol)
+    p_mean: arithmetic mean
     '''
     runs = [evaulate(sampled_H, subspace, use_exact_S, m, factors_per_sample, mapper) for _ in range(n_runs)]
     p = np.array([r["p"] for r in runs])
