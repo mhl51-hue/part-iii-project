@@ -54,7 +54,7 @@ def apply_projector(subspace, filter_E, psi0):
         return np.nan, np.nan
     phi = phi / norm
     energy = phi @ subspace.H @ phi
-    fidelity = abs(subspace.V[:, 0] @ phi)
+    fidelity = abs(subspace.V[:, 0] @ phi)**2
     return energy, fidelity
 
 def evaluate_orders(subspace, ground_state_energy, max_order=150, beta=1.1):

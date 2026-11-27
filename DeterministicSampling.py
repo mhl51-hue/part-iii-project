@@ -138,7 +138,7 @@ def evaluate(sampled_op, subspace, ground_state_energy, m=10, deg=1000, epsilon=
         psi_out = V @ (w * c)
         p = np.vdot(psi_out, psi_out).real
         out[name] = (dict(p=p, energy=np.vdot(psi_out, H_full @ psi_out).real / p,
-                        fidelity=abs(np.vdot(ground, psi_out)) / np.sqrt(p))
+                        fidelity=abs(np.vdot(ground, psi_out))**2 / p)
                     if p > 1e-300 else dict(p=p, energy=np.nan, fidelity=np.nan))
     return out
 

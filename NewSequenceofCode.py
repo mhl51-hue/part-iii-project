@@ -46,7 +46,7 @@ def evaulate(sampled_H, subspace, use_exact_S, m, factors_per_sample=1, mapper=N
 
     p = np.vdot(psi, psi).real
 
-    return dict(p=p, energy=np.vdot(psi, H_full @ psi).real / p, fidelity=abs(np.vdot(true_ground, psi)) / np.sqrt(p),
+    return dict(p=p, energy=np.vdot(psi, H_full @ psi).real / p, fidelity=abs(np.vdot(true_ground, psi))**2 / p,
                 alphas=alphas)
 
 def average_over_runs_new(sampled_H, subspace, use_exact_S, m, factors_per_sample, n_runs=100, mapper=None):

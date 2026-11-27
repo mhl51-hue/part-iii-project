@@ -33,7 +33,7 @@ def projection_outcome(E, c, w):
     Apply weights w_i = f(E_i) to a state with overlaps c_i on eigenstate
     returns p: squared norm of psi, success probability
             energy: averaged energy of normalised state
-            fidelity: overlap of the state after projector has acted on it with the true ground state
+            fidelity: squared overlap of the state after projector has acted on it with the true ground state
         
     The weights of the projectors are run through this function and this returns the success probability
     '''
@@ -41,7 +41,7 @@ def projection_outcome(E, c, w):
     p = prob.sum()
     if not np.isfinite(p) or p < 1e-300:
         return dict(p=p, energy=np.nan, fidelity=np.nan)
-    return dict(p=p, energy=float((prob * E).sum() / p), fidelity=float(np.sqrt(prob[0] / p)))
+    return dict(p=p, energy=float((prob * E).sum() / p), fidelity=float(prob[0] / p))
 
 def lcu_alpha(qubit_H, scale=1.0, shift=0.0):
     '''
